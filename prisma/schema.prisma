@@ -1,0 +1,19 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model AudioState {
+  id          String   @id @default(cuid())
+  url         String   @unique
+  currentTime Float    @default(0)
+  updatedAt   DateTime @updatedAt
+}
