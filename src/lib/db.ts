@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 
-let MONGODB_URI = process.env.DATABASE_URL!;
+const MONGODB_URI = process.env.DATABASE_URL!;
 
 if (!MONGODB_URI) {
   throw new Error('Please define the DATABASE_URL environment variable inside .env');
@@ -15,21 +14,12 @@ if (!MONGODB_URI) {
 let cached = (global as any).mongoose;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null, mongoServer: null };
+  cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
 export async function connectToDb() {
   if (cached.conn) {
     return cached.conn;
-  }
-
-  // Workaround for restricted sandbox environments failing to resolve DNS SRV records
-  // We use mongodb-memory-server in development unless explicitly disabled
-  if (process.env.NODE_ENV !== 'production' && !process.env.USE_REAL_DB_IN_DEV) {
-    if (!cached.mongoServer) {
-      cached.mongoServer = await MongoMemoryServer.create();
-    }
-    MONGODB_URI = cached.mongoServer.getUri();
   }
 
   if (!cached.promise) {
