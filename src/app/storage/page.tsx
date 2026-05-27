@@ -35,6 +35,22 @@ export default function StoragePage() {
     router.push(`/?url=${encodeURIComponent(url)}`);
   };
 
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation(); // Prevent triggering the row click
+    if (window.confirm('Bạn có chắc muốn xóa lịch sử audio này?')) {
+      try {
+        const res = await fetch(`/api/audio?id=${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setRecords(records.filter(r => r.id !== id));
+        } else {
+          console.error("Failed to delete");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#0f1115] text-gray-100 flex flex-col items-center p-4 selection:bg-blue-500/30 font-sans relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0f1115] to-[#0f1115] -z-10 fixed" />
@@ -64,33 +80,42 @@ export default function StoragePage() {
             <Link href="/" className="text-blue-400 hover:text-blue-300 font-medium">Bắt đầu nghe ngay &rarr;</Link>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4 max-w-full">
             {records.map((record) => (
               <div 
                 key={record.id} 
                 onClick={() => handleSelect(record.url)}
-                className="bg-[#15171c] border border-gray-700/50 hover:border-blue-500/50 rounded-xl p-5 cursor-pointer transition-all hover:bg-[#1a1d24] group"
+                className="bg-[#15171c] border border-gray-700/50 hover:border-blue-500/50 rounded-xl p-5 cursor-pointer transition-all hover:bg-[#1a1d24] group relative overflow-hidden flex flex-col md:flex-row md:items-center gap-4"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 shrink-0 rounded-full bg-gray-800 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                    <svg className="w-4 h-4 text-gray-300 group-hover:text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-200 truncate group-hover:text-blue-400 transition-colors" title={record.url}>
-                      {record.url.split('/').pop()}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1 truncate">{record.url}</p>
-                  </div>
+                <div className="w-10 h-10 shrink-0 rounded-full bg-gray-800 flex items-center justify-center group-hover:bg-blue-600 transition-colors hidden md:flex">
+                  <svg className="w-4 h-4 text-gray-300 group-hover:text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                
+                <div className="flex-1 min-w-0 overflow-hidden pr-2">
+                  <p className="font-semibold text-gray-200 truncate group-hover:text-blue-400 transition-colors" title={record.url}>
+                    {record.url.split('/').pop()}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1 truncate break-all">{record.url}</p>
+                </div>
+                
+                <div className="flex items-center justify-between md:justify-end gap-4 mt-2 md:mt-0 shrink-0">
                   <div className="text-right shrink-0">
-                    <div className="bg-gray-800/80 px-3 py-1 rounded-md border border-gray-700">
+                    <div className="bg-gray-800/80 px-3 py-1 rounded-md border border-gray-700 inline-block">
                       <span className="text-sm font-mono text-blue-300">{formatTime(record.lastPosition)}</span>
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-1">
+                    <p className="text-[10px] text-gray-500 mt-1 block">
                       {new Date(record.updatedAt).toLocaleDateString('vi-VN')}
                     </p>
                   </div>
+                  <button 
+                    onClick={(e) => handleDelete(e, record.id)}
+                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/30"
+                    title="Xóa audio này"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
                 </div>
               </div>
             ))}

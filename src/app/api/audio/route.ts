@@ -33,3 +33,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+// Xoá một audio
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Missing ID parameter' }, { status: 400 });
+    }
+
+    const db = getDb();
+    const stmt = db.prepare('DELETE FROM AudioRecords WHERE id = ?');
+    const result = stmt.run(id);
+
+    if (result.changes === 0) {
+      return NextResponse.json({ error: 'Record not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, deletedId: id }, { status: 200 });
+  } catch (error) {
+    console.error('Lỗi xoá audio:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
