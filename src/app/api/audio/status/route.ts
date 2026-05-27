@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { connectToDb, AudioRecord } from '@/lib/db';
 
 export async function GET(request: Request) {
   try {
@@ -10,11 +10,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing URL parameter' }, { status: 400 });
     }
 
-    const db = getDb();
-    const record = db.prepare('SELECT lastPosition FROM AudioRecords WHERE url = ?').get(url);
+    await connectToDb();
+    const record = await AudioRecord.findOne({ url }, 'lastPosition').lean();
     
     if (!record) {
-      return NextResponse.json({ lastPosition: 0 }); // Không thấy thì coi như 0
+      return NextResponse.json({ lastPosition: 0 });
     }
     
     return NextResponse.json(record);
@@ -31,16 +31,14 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
     }
 
-    const db = getDb();
-    const stmt = db.prepare('UPDATE AudioRecords SET lastPosition = ?, updatedAt = CURRENT_TIMESTAMP WHERE url = ?');
-    const result = stmt.run(lastPosition, url);
-    
-    if (result.changes === 0) {
-      // Có thể record chưa có do chưa gọi POST, tự động thêm
-      db.prepare('INSERT INTO AudioRecords (url, lastPosition) VALUES (?, ?)').run(url, lastPosition);
-    }
+    await connectToDb();
+    const result = await AudioRecord.findOneAndUpdate(
+      { url },
+      { lastPosition },
+      { new: true, upsert: true }
+    );
 
-    return NextResponse.json({ success: true, url, lastPosition }, { status: 200 });
+    return NextResponse.json({ success: true, url, lastPosition: result.lastPosition }, { status: 200 });
   } catch (error) {
     console.error('Lỗi lưu trạng thái audio:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

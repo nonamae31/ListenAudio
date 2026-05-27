@@ -35,7 +35,7 @@ export default function StoragePage() {
     router.push(`/?url=${encodeURIComponent(url)}`);
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: number) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent triggering the row click
     if (window.confirm('Bạn có chắc muốn xóa lịch sử audio này?')) {
       try {
