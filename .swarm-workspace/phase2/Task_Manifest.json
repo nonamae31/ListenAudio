@@ -1,0 +1,19 @@
+{
+  "sprint_id": "SPRINT-20260626-001",
+  "sliced_tasks": [
+    {
+      "slice_id": "SLICE-1",
+      "assigned_to": "Coder A",
+      "locked_directory": "d:/file_code/ListenAudio/src",
+      "description": "Thực hiện cấu trúc Global Audio Player và State: 1. Cập nhật tên web trong `app/layout.tsx`. 2. Tạo `store/useAudioStore.ts` (Zustand) để quản lý state và persist. 3. Tạo `components/player/global-audio-player.tsx` (gắn ở layout) tích hợp `navigator.sendBeacon`, MediaSession API, Keyboard shortcuts, Tooltip timeline. 4. Tạo `components/player/timestamp-input.tsx` cho phép nhập HH:MM:SS để tua nhanh.",
+      "iron_laws_to_check": ["Iron Law 1", "Iron Law 2", "Iron Law 3"]
+    },
+    {
+      "slice_id": "SLICE-2",
+      "assigned_to": "Coder B",
+      "locked_directory": "d:/file_code/ListenAudio/src",
+      "description": "Thực hiện tính năng Playback History: 1. Tạo `actions/history.ts` (Server Actions) để fetch, save, delete, clear_all. 2. Tạo `components/history/history-list.tsx` và `history-item.tsx` hiển thị danh sách lịch sử. 3. Đảm bảo dùng SWR hoặc Zustand để fetch và xoá (bao gồm nút Clear All).",
+      "iron_laws_to_check": ["Iron Law 1", "Iron Law 2", "Iron Law 3", "Iron Law 4"]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+# Master Architecture Document (Tri-Consensus Merged)
+
+## I. CORE REQUIREMENTS (Từ yêu cầu user — BẮT BUỘC thực hiện)
+- **FE-001**: Đổi tên hiển thị/logo trang web thành "Listen Audio".
+- **FE-002**: Bổ sung input field ở giao diện Audio Player cho phép người dùng nhập trực tiếp timestamp (VD: `HH:MM:SS`) để nhảy nhanh đến vị trí mong muốn.
+- **FE-003**: Tối ưu hóa logic lưu lịch sử: Chỉ lưu vị trí phát khi user Pause, Stop, hoặc trước khi Component bị unmount. Không dùng interval gọi DB liên tục.
+- **FE-004**: Bổ sung giao diện Playback History (danh sách trên main page) hiển thị các audio đã nghe và vị trí timestamp cuối cùng, cho phép click để nghe tiếp.
+- **FE-005**: Thêm nút "Xóa" cho từng item trong danh sách Playback History để người dùng dọn dẹp lịch sử.
+
+## II. ENHANCEMENT PROPOSALS (ĐỀ XUẤT CẢI TIẾN TỪ HỘI ĐỒNG)
+*Lưu ý: User sẽ chọn các cải tiến này trước khi Code Phase bắt đầu.*
+
+| # | Enhancement | Mô tả | Lý do |
+|---|---|---|---|
+| E1 | Persistent LocalStorage (Zustand Persist) | Dùng `Zustand persist` middleware để lưu State/History list ở Client `localStorage` kết hợp đồng bộ DB. | Giúp UI render ngay lập tức không cần chờ API, trải nghiệm mượt mà. |
+| E2 | MediaSession API | Tích hợp `navigator.mediaSession` để hiển thị metadata bài nhạc, cho phép Play/Pause/Seek qua thanh điều khiển của hệ điều hành. | Chuẩn UX hiện đại cho Web Audio Player. |
+| E3 | Unmount Sync với `sendBeacon` | Sử dụng `navigator.sendBeacon` trong hàm cleanup để lưu DB. | Đảm bảo history không bị mất khi user đóng tab đột ngột. |
+| E4 | Persistent Layout Player | Đặt Component AudioPlayer tại `RootLayout` hoặc ngoài cấp page. | Giữ audio không ngắt quãng khi người dùng duyệt qua lại giữa trang History/Home. |
+| E5 | Keyboard Accessibility | Hỗ trợ phím Space để Play/Pause, mũi tên Trái/Phải để tua nhanh (Skip 10s). | Đảm bảo tính tiếp cận (Accessibility) chuẩn web. |
+
+## III. ARCHITECTURE & COMPONENT TREE
+
+### 1. Kiến trúc thư mục (File Structure)
+- `app/layout.tsx`: Root Layout (cập nhật Web Name FE-001).
+- `app/components/AudioPlayer/`:
+  - `GlobalAudioPlayer.tsx`: Component chính chứa audio tag (Áp dụng E4 nếu chọn).
+  - `TimestampSeekInput.tsx`: Component nhập HH:MM:SS (FE-002).
+- `app/components/History/`:
+  - `PlaybackHistoryUI.tsx`: Hiển thị danh sách lịch sử nghe (FE-004).
+  - `HistoryRecordItem.tsx`: Từng item, có nút xóa (FE-005).
+- `app/store/useAudioStore.ts`: Zustand store quản lý state (E1, FE-003).
+
+### 2. Quản lý trạng thái (State Management)
+- Khởi tạo store Zustand (Client-side) với chức năng lưu vị trí `currentTime`, `isPlaying`.
+- Player sẽ trigger hàm `syncHistoryToServer()` chỉ ở các event: `onPause`, `onEnded`, và xử lý trong `useEffect` cleanup.
+
+### 3. API & Server Actions
+- `actions/history.ts`:
+  - `saveAudioHistory(audioUrl, timestamp)`: Cập nhật vị trí nghe vào DB.
+  - `getAudioHistory()`: Lấy danh sách lịch sử.
+  - `deleteAudioHistory(audioUrl)`: Xóa record.
+
+### 4. Iron Laws Compliance Check
+- **Iron Law 1**: Các component tương tác (`GlobalAudioPlayer`, `PlaybackHistoryUI`) bắt buộc có `'use client'`.
+- **Iron Law 2**: `PlaybackHistoryUI` sẽ dùng hydrate pattern để tránh SSR mismatch nếu dùng `localStorage`.
+- **Iron Law 3 & 5**: Strict typing cho `PlaybackHistoryRecord` và dùng tuyệt đối (absolute imports).
+- **Iron Law 4**: Dùng Server Actions để lưu/xóa data, không dùng `useEffect + fetch` cho mutations.

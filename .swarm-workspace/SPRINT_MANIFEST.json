@@ -1,0 +1,8 @@
+{
+  "sprint_id": "SPRINT-20260626-001",
+  "feature_name": "Enhance Listen Audio App",
+  "raw_requirement": "Sửa tên web này listen audio và tại trang nghe audio hiện tại thì thêm khả năng chọn mốc thời gian nghe gúp tôi. Vì hiện tại ứng dụng này nhiều lúc nó vẫn bị reset về 0, không biết tại sao, lúc đó tôi cần 1 khả năng điền mốc thời gian và ấn để nó chuyển đến đó luôn chứ cái thanh nhỏ bên dưới khó kéo chuẩn. Và có thể làm được thì hiện được cả lịch sử thời gian đã xem trước, lịch sử không phải cứ 6s là lưu 1 lần. Khi nào xem liên tiếp thì không tính lưu vào lịch sử, chỉ tính lần cuối khi ngắt xem thôi. Nhớ đừng có gọi db quá nhiều không làm sập db đấy. Thêm cái giao diện lịch sử xem vào trang ảnh trên, và tôi có thể xóa lịch sử chi tiết (nút ấn xóa từng cái)",
+  "started_at": "2026-06-26T16:30:00+07:00",
+  "manager": "human",
+  "swarm_status": "INITIATED"
+}
