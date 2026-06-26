@@ -74,19 +74,36 @@ function HomeContent() {
       .catch(console.error);
   }, [url]);
 
-  // Keepalive unmount logic (E1, FE-003)
+  // Keepalive unmount logic (E1, FE-003) & Mobile background sync
   useEffect(() => {
-    const handleBeforeUnload = () => {
+    const saveState = () => {
       if (url && audioRef.current) {
          const currentTime = audioRef.current.currentTime;
-         const blob = new Blob([JSON.stringify({ url, lastPosition: currentTime })], { type: 'application/json' });
-         navigator.sendBeacon('/api/audio/status', blob);
+         lastSavedTimeRef.current = currentTime;
+         fetch('/api/audio/status', {
+           method: 'PUT',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ url, lastPosition: currentTime }),
+           keepalive: true
+         }).catch(console.error);
       }
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveState();
+      }
+    };
+
+    window.addEventListener('beforeunload', saveState);
+    window.addEventListener('pagehide', saveState);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
     return () => {
-      handleBeforeUnload(); 
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      saveState(); 
+      window.removeEventListener('beforeunload', saveState);
+      window.removeEventListener('pagehide', saveState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [url]);
 
