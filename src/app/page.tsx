@@ -35,9 +35,21 @@ function HomeContent() {
 
   const loadHistory = () => {
     fetch("/api/audio")
-      .then(res => res.json())
-      .then(data => setHistory(data))
-      .catch(console.error);
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setHistory(data);
+        } else {
+          setHistory([]);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load history:", err);
+        setHistory([]);
+      });
   };
 
   useEffect(() => {
@@ -142,6 +154,17 @@ function HomeContent() {
     }
   };
 
+  const handleSkip = (seconds: number) => {
+    if (!audioRef.current) return;
+    const duration = audioRef.current.duration;
+    let newTime = audioRef.current.currentTime + seconds;
+    if (newTime < 0) newTime = 0;
+    if (Number.isFinite(duration) && newTime > duration) {
+      newTime = duration;
+    }
+    audioRef.current.currentTime = newTime;
+  };
+
   const handleManualSeek = () => {
     if (!audioRef.current || !seekTime) return;
     const parts = seekTime.split(':').reverse();
@@ -174,10 +197,12 @@ function HomeContent() {
           else audioRef.current.pause();
           break;
         case 'ArrowLeft':
-          audioRef.current.currentTime -= 10;
+          e.preventDefault();
+          handleSkip(-5);
           break;
         case 'ArrowRight':
-          audioRef.current.currentTime += 10;
+          e.preventDefault();
+          handleSkip(5);
           break;
       }
     };
@@ -259,11 +284,40 @@ function HomeContent() {
                   src={url}
                   controls
                   autoPlay
-                  className="w-full h-12 rounded-lg outline-none custom-audio-player mb-6"
+                  className="w-full h-12 rounded-lg outline-none custom-audio-player mb-4"
                   onPause={handleSaveTime}
                   onEnded={handleSaveTime}
                   onLoadedMetadata={handleLoadedMetadata}
                 />
+
+                {/* Quick Seek Controls (Mobile & Desktop) */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <button
+                    type="button"
+                    onClick={() => handleSkip(-5)}
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-[#1c1f26] hover:bg-gray-700 active:bg-gray-600 text-gray-200 hover:text-white rounded-xl border border-gray-700/70 hover:border-blue-500/50 shadow-sm transition-all active:scale-[0.98] select-none font-semibold text-sm sm:text-base group"
+                    title="Tua lùi 5 giây (← ArrowLeft)"
+                    aria-label="Tua lùi 5 giây"
+                  >
+                    <svg className="w-5 h-5 text-blue-400 group-hover:-translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M11 5L1 12l10 7V5zm12 0l-10 7 10 7V5z"/>
+                    </svg>
+                    <span>Lùi 5s</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSkip(5)}
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-[#1c1f26] hover:bg-gray-700 active:bg-gray-600 text-gray-200 hover:text-white rounded-xl border border-gray-700/70 hover:border-blue-500/50 shadow-sm transition-all active:scale-[0.98] select-none font-semibold text-sm sm:text-base group"
+                    title="Tua tới 5 giây (→ ArrowRight)"
+                    aria-label="Tua tới 5 giây"
+                  >
+                    <span>Tiến 5s</span>
+                    <svg className="w-5 h-5 text-blue-400 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M1 19l10-7L1 5v14zm12 0l10-7-10-7v14z"/>
+                    </svg>
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Playback rate controls */}
@@ -322,7 +376,7 @@ function HomeContent() {
           <div className="pt-6 mt-4">
              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-200">Lịch sử nghe</h2>
-                {history.length > 0 && (
+                {Array.isArray(history) && history.length > 0 && (
                    <button 
                      onClick={() => {
                         Promise.all(history.map(item => fetch(`/api/audio?id=${item.id}`, { method: 'DELETE' })))
@@ -335,7 +389,7 @@ function HomeContent() {
                 )}
              </div>
              
-             {history.length === 0 ? (
+             {!Array.isArray(history) || history.length === 0 ? (
                 <p className="text-gray-500 text-sm text-center py-4 bg-[#15171c] rounded-xl border border-gray-800">Chưa có lịch sử nào.</p>
              ) : (
                 <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">

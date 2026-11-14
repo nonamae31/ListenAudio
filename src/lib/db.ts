@@ -1,15 +1,8 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.DATABASE_URL!;
-
-if (!MONGODB_URI) {
-  throw new Error('Please define the DATABASE_URL environment variable inside .env');
-}
-
 /**
  * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
+ * in development and serverless invocations.
  */
 let cached = (global as any).mongoose;
 
@@ -18,6 +11,12 @@ if (!cached) {
 }
 
 export async function connectToDb() {
+  const MONGODB_URI = process.env.DATABASE_URL;
+
+  if (!MONGODB_URI) {
+    throw new Error('Please define the DATABASE_URL environment variable inside .env or Vercel Environment Variables');
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
@@ -25,6 +24,7 @@ export async function connectToDb() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
